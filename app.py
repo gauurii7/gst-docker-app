@@ -1,174 +1,225 @@
-from flask import Flask, request, jsonify, render_template_string
-from pymongo import MongoClient
+from flask import Flask, render_template, request, redirect, url_for
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# MongoDB
-client = MongoClient("mongodb://db:27017/")
-db = client["gst_db"]
-collection = db["bills"]
+UPLOAD_FOLDER = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# ------------------ UI ------------------
-HTML_PAGE = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Smart GST Billing</title>
-    <style>
-        body {
-            font-family: 'Segoe UI';
-            background: linear-gradient(to right, #667eea, #764ba2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+favourites = []  # each entry: { 'outfit': str, 'occasion': str }
 
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            text-align: center;
-            width: 320px;
-        }
-
-        h2 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        select, input {
-            margin: 8px 0;
-            padding: 10px;
-            width: 100%;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-        }
-
-        button {
-            margin-top: 15px;
-            padding: 12px;
-            width: 100%;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: #5a67d8;
-        }
-
-        #result {
-            margin-top: 20px;
-            font-weight: bold;
-            color: green;
-        }
-    </style>
-</head>
-<body>
-
-<div class="card">
-    <h2>Smart GST Billing</h2>
-
-    <select id="category1">
-        <option value="18">📱 Electronics (18%)</option>
-        <option value="5">👕 Clothes (5%)</option>
-        <option value="12">🍔 Eatery (12%)</option>
-    </select>
-    <input id="price1" placeholder="Item 1 Price">
-
-    <select id="category2">
-        <option value="18">📱 Electronics (18%)</option>
-        <option value="5">👕 Clothes (5%)</option>
-        <option value="12">🍔 Eatery (12%)</option>
-    </select>
-    <input id="price2" placeholder="Item 2 Price">
-
-    <button onclick="calculate()">Generate Bill</button>
-
-    <h3 id="result"></h3>
-</div>
-
-<script>
-function calculate() {
-    fetch('/bill', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            items: [
-                {
-                    price: Number(document.getElementById('price1').value),
-                    gst: Number(document.getElementById('category1').value)
-                },
-                {
-                    price: Number(document.getElementById('price2').value),
-                    gst: Number(document.getElementById('category2').value)
-                }
-            ]
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById('result').innerHTML =
-            "Total: ₹" + data.final + " | GST: ₹" + data.gst;
-    });
-}
-</script>
-
-</body>
-</html>
-"""
-
-# ------------------ Routes ------------------
-
+# ---------------- SPLASH ----------------
 @app.route('/')
+def splash():
+    return render_template('splash.html')
+
+
+# ---------------- LOGIN ----------------
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+
+@app.route('/home', methods=['GET', 'POST'])
 def home():
-    return render_template_string(HTML_PAGE)
+    return render_template('home.html')
 
 
-def calculate_gst(price, gst_rate):
-    return (price * gst_rate) / 100
+# ---------------- DASHBOARD ----------------
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html', favs=favourites)
 
 
-@app.route('/bill', methods=['POST'])
-def generate_bill():
-    data = request.json
-    items = data.get("items", [])
+# ---------------- SELECT ----------------
+@app.route('/select')
+def select():
+    return render_template('select.html')
 
-    total = 0
-    total_gst = 0
 
-    for item in items:
-        price = item.get("price") or 0
-        gst = item.get("gst") or 0
+@app.route('/decide', methods=['POST'])
+def decide():
 
-        gst_amount = calculate_gst(price, gst)
-        total += price
-        total_gst += gst_amount
+    a_top = request.form.get('a_top')
+    a_bottom = request.form.get('a_bottom')
+    a_shoes = request.form.get('a_shoes')
+    b_top = request.form.get('b_top')
+    b_bottom = request.form.get('b_bottom')
+    b_shoes = request.form.get('b_shoes')
+    occasion = request.form.get('occasion', '').lower()
 
-    final_amount = total + total_gst
-
-    bill_data = {
-        "items": items,
-        "subtotal": total,
-        "gst": total_gst,
-        "final": final_amount
+    occasion_rules = {
+        'office': {
+            'winner': 'Outfit A',
+            'reasons': [
+                '👔 Outfit A has a more formal and professional look suitable for workplace.',
+                '🎨 The color combination in Outfit A is subtle and office-appropriate.',
+                '✅ Outfit A follows a smart-casual dress code expected in office environments.'
+            ]
+        },
+        'casual': {
+            'winner': 'Outfit B',
+            'reasons': [
+                '😎 Outfit B has a relaxed and comfortable style perfect for casual outings.',
+                '🌈 The colors in Outfit B are vibrant and fun, great for everyday wear.',
+                '👟 Outfit B pairs well with casual footwear making it an easy go-to look.'
+            ]
+        },
+        'function': {
+            'winner': 'Outfit A',
+            'reasons': [
+                '🎉 Outfit A has an elegant and put-together look ideal for functions and events.',
+                '✨ The outfit stands out in a crowd while still looking classy and appropriate.',
+                '👗 Outfit A strikes the right balance between festive and formal for functions.'
+            ]
+        },
+        'traditional': {
+            'winner': 'Outfit B',
+            'reasons': [
+                '🪔 Outfit B carries a traditional and cultural aesthetic that fits the occasion.',
+                '🎨 The rich tones and style of Outfit B complement traditional settings beautifully.',
+                '🙏 Outfit B respects the dress etiquette expected at traditional ceremonies.'
+            ]
+        },
+        'party': {
+            'winner': 'Outfit B',
+            'reasons': [
+                '🥂 Outfit B has a bold and stylish look that turns heads at parties.',
+                '💃 The outfit has great energy and flair perfect for a party vibe.',
+                '🌟 Outfit B is trendy and eye-catching, exactly what a party calls for.'
+            ]
+        }
     }
 
-    # Save to MongoDB
-    result = collection.insert_one(bill_data)
-    bill_data["_id"] = str(result.inserted_id)
+    rule = occasion_rules.get(occasion, {
+        'winner': 'Outfit A',
+        'reasons': [
+            '✅ Outfit A has a more balanced and versatile look overall.',
+            '🎨 The color and style combination works well for this occasion.',
+            '👌 Outfit A is the safer and smarter choice for this event.'
+        ]
+    })
 
-    return jsonify(bill_data)
+    return render_template('result.html',
+                           winner=rule['winner'],
+                           occasion=occasion.capitalize(),
+                           reasons=rule['reasons'],
+                           a_top=a_top, a_bottom=a_bottom, a_shoes=a_shoes,
+                           b_top=b_top, b_bottom=b_bottom, b_shoes=b_shoes)
 
 
-# ------------------ Run ------------------
+# ---------------- UPLOAD ----------------
+@app.route('/upload')
+def upload():
+    return render_template('upload.html')
 
-if __name__ == "__main__":
-    print("Starting Smart GST App...")
-    app.run(host="0.0.0.0", port=5000)
+
+@app.route('/compare', methods=['POST'])
+def compare():
+
+    file1 = request.files['outfit1']
+    file2 = request.files['outfit2']
+
+    filename1 = secure_filename(file1.filename)
+    filename2 = secure_filename(file2.filename)
+
+    path1 = os.path.join(app.config['UPLOAD_FOLDER'], filename1)
+    path2 = os.path.join(app.config['UPLOAD_FOLDER'], filename2)
+
+    file1.save(path1)
+    file2.save(path2)
+
+    occasion = request.form.get('occasion', '').lower()
+
+    occasion_outfits = {
+        'office': {
+            'recommendation': 'Outfit 1',
+            'reasons': [
+                '👔 Outfit 1 has a clean and professional look perfect for the office.',
+                '🎨 The tones are subtle and workplace-appropriate.',
+                '✅ It follows a smart-casual dress code expected in professional settings.'
+            ]
+        },
+        'casual': {
+            'recommendation': 'Outfit 2',
+            'reasons': [
+                '😎 Outfit 2 is relaxed and comfortable, great for casual outings.',
+                '🌈 The colors are fun and vibrant for everyday wear.',
+                '👟 It pairs well with casual footwear for an easy everyday look.'
+            ]
+        },
+        'function': {
+            'recommendation': 'Outfit 1',
+            'reasons': [
+                '🎉 Outfit 1 looks elegant and put-together, ideal for functions and events.',
+                '✨ It stands out in a crowd while remaining classy and appropriate.',
+                '👗 It strikes the right balance between festive and formal for functions.'
+            ]
+        },
+        'traditional': {
+            'recommendation': 'Outfit 2',
+            'reasons': [
+                '🪔 Outfit 2 carries a traditional aesthetic that fits the occasion beautifully.',
+                '🎨 The rich tones complement traditional settings perfectly.',
+                '🙏 It respects the dress etiquette expected at traditional ceremonies.'
+            ]
+        },
+        'party': {
+            'recommendation': 'Outfit 2',
+            'reasons': [
+                '🥂 Outfit 2 is bold and stylish, perfect for turning heads at parties.',
+                '💃 It has great energy and flair that matches the party vibe.',
+                '🌟 It is trendy and eye-catching, exactly what a party calls for.'
+            ]
+        }
+    }
+
+    rule = occasion_outfits.get(occasion, {
+        'recommendation': 'Outfit 1',
+        'reasons': [
+            '✅ Outfit 1 has a more balanced and versatile look overall.',
+            '🎨 The color and style combination works well for this occasion.',
+            '👌 It is the safer and smarter choice for this event.'
+        ]
+    })
+
+    return render_template('result.html',
+                           img1=filename1,
+                           img2=filename2,
+                           winner=rule['recommendation'],
+                           occasion=occasion.capitalize(),
+                           reasons=rule['reasons'])
+
+
+@app.route('/add_fav', methods=['POST'])
+def add_fav():
+    outfit = request.form.get('outfit', 'Outfit')
+    occasion = request.form.get('occasion', '')
+    favourites.append({'outfit': outfit, 'occasion': occasion})
+    return redirect(url_for('dashboard'))
+
+
+# ---------------- RATE ----------------
+@app.route('/rate')
+def rate():
+    return render_template('rate.html')
+
+
+@app.route('/rate_result', methods=['POST'])
+def rate_result():
+
+    file = request.files['outfit']
+    filename = secure_filename(file.filename)
+
+    path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(path)
+
+    return render_template('result.html',
+                           single=filename,
+                           text="Nice outfit! Try contrast colors 👌")
+
+
+# ---------------- RUN ----------------
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)

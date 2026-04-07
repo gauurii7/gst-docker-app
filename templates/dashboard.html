@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #fff5f9; min-height: 100vh; color: #3d0020; padding-bottom: 84px; }
+
+.topbar { padding: 14px 20px; display: flex; align-items: center; background: white; position: sticky; top: 0; z-index: 20; box-shadow: 0 2px 12px rgba(233,30,140,0.08); }
+.topbar h2 { flex: 1; text-align: center; font-size: 18px; font-weight: bold; color: #880e4f; }
+.icon-btn { background: #fff0f7; border: 1.5px solid #f8bbd0; border-radius: 50%; width: 36px; height: 36px; font-size: 16px; cursor: pointer; color: #e91e8c; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: transform 0.2s; }
+.icon-btn:hover { transform: scale(1.1); }
+
+.profile-strip {
+    margin: 16px; background: linear-gradient(135deg, #fce4ff, #ffe4f0, #ffd6e8);
+    border-radius: 24px; padding: 20px; display: flex; align-items: center; gap: 16px;
+    border: 1.5px solid #f8bbd0; box-shadow: 0 4px 16px rgba(233,30,140,0.1);
+}
+.avatar-big { width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg,#e91e8c,#f06292,#ce93d8); display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(233,30,140,0.3); }
+.profile-info h3 { font-size: 17px; font-weight: bold; color: #880e4f; }
+.profile-info p { font-size: 12px; color: #c2185b; margin-top: 3px; opacity: 0.8; }
+.profile-badge { margin-left: auto; background: linear-gradient(135deg,#e91e8c,#f06292); color: white; border-radius: 20px; padding: 5px 14px; font-size: 11px; font-weight: bold; box-shadow: 0 3px 10px rgba(233,30,140,0.3); }
+
+.stats-row { display: flex; gap: 10px; margin: 0 16px 18px; }
+.stat-box { flex: 1; background: white; border-radius: 18px; padding: 14px; text-align: center; border: 1.5px solid #f8bbd0; box-shadow: 0 2px 10px rgba(233,30,140,0.06); }
+.stat-box .s-num { font-size: 24px; font-weight: 900; background: linear-gradient(135deg,#e91e8c,#ce93d8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.stat-box .s-label { font-size: 11px; color: #f48fb1; margin-top: 3px; }
+
+.section-label { padding: 4px 20px 10px; font-size: 13px; font-weight: bold; color: #c2185b; display: flex; align-items: center; gap: 6px; }
+
+.fav-grid { display: flex; flex-direction: column; gap: 10px; padding: 0 16px; }
+.fav-card {
+    background: white; border-radius: 20px; padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+    border: 1.5px solid #f8bbd0; box-shadow: 0 2px 10px rgba(233,30,140,0.06);
+    animation: fadeUp 0.4s ease; transition: transform 0.2s;
+}
+.fav-card:hover { transform: translateX(4px); box-shadow: 0 4px 16px rgba(233,30,140,0.12); }
+@keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+.fav-icon { width: 50px; height: 50px; border-radius: 16px; background: linear-gradient(135deg,#fce4ff,#ffe4f0); display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; border: 1px solid #f8bbd0; }
+.fav-info { flex: 1; }
+.fav-info .f-name { font-size: 15px; font-weight: bold; color: #880e4f; }
+.fav-info .f-occ { font-size: 12px; color: #f48fb1; margin-top: 3px; }
+.occ-badge { background: linear-gradient(135deg,#e91e8c,#f06292); color: white; border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: bold; white-space: nowrap; }
+
+.empty-state { text-align: center; padding: 50px 20px; }
+.empty-state .e-icon { font-size: 68px; margin-bottom: 16px; animation: bounce 1.5s ease infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+.empty-state h3 { font-size: 20px; color: #880e4f; margin-bottom: 8px; }
+.empty-state p { font-size: 13px; color: #f48fb1; margin-bottom: 24px; line-height: 1.6; }
+.empty-cta { display: inline-block; padding: 14px 36px; background: linear-gradient(135deg,#e91e8c,#f06292,#ce93d8); color: white; border-radius: 30px; text-decoration: none; font-size: 15px; font-weight: bold; box-shadow: 0 4px 16px rgba(233,30,140,0.35); transition: transform 0.2s; }
+.empty-cta:hover { transform: translateY(-2px); }
+
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #f8bbd0; display: flex; justify-content: space-around; padding: 10px 0 16px; z-index: 30; box-shadow: 0 -4px 16px rgba(233,30,140,0.08); }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; }
+.nav-item .n-icon { font-size: 22px; }
+.nav-item .n-label { font-size: 10px; color: #f48fb1; }
+.nav-item.active .n-label { color: #e91e8c; font-weight: bold; }
+.nav-item.active .n-icon { filter: drop-shadow(0 0 4px rgba(233,30,140,0.5)); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <a class="icon-btn" href="/home">🏠</a>
+    <h2>💗 My Wardrobe</h2>
+    <div style="width:36px"></div>
+</div>
+
+<div class="profile-strip">
+    <div class="avatar-big">👗</div>
+    <div class="profile-info">
+        <h3>Style Enthusiast ✨</h3>
+        <p>Building the perfect wardrobe</p>
+    </div>
+    <div class="profile-badge">💅 Stylist</div>
+</div>
+
+<div class="stats-row">
+    <div class="stat-box">
+        <div class="s-num">{{ favs|length }}</div>
+        <div class="s-label">Saved</div>
+    </div>
+    <div class="stat-box">
+        <div class="s-num">5</div>
+        <div class="s-label">Occasions</div>
+    </div>
+    <div class="stat-box">
+        <div class="s-num">💗</div>
+        <div class="s-label">AI Picks</div>
+    </div>
+</div>
+
+{% if favs %}
+<div class="section-label">👗 Saved Outfits</div>
+<div class="fav-grid">
+    {% for f in favs %}
+    <div class="fav-card">
+        <div class="fav-icon">👗</div>
+        <div class="fav-info">
+            <div class="f-name">{{ f.outfit }}</div>
+            <div class="f-occ">AI recommended pick</div>
+        </div>
+        <span class="occ-badge">{{ f.occasion }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="e-icon">🛍️</div>
+    <h3>No saved outfits yet!</h3>
+    <p>Decide on an outfit and save it here<br>to build your dream wardrobe 💗</p>
+    <a href="/select" class="empty-cta">Start Styling 💅</a>
+</div>
+{% endif %}
+
+<div class="bottom-nav">
+    <a class="nav-item" href="/home"><span class="n-icon">🏠</span><span class="n-label">Home</span></a>
+    <a class="nav-item" href="/select"><span class="n-icon">👔</span><span class="n-label">Select</span></a>
+    <a class="nav-item" href="/upload"><span class="n-icon">📸</span><span class="n-label">Upload</span></a>
+    <a class="nav-item" href="/rate"><span class="n-icon">⭐</span><span class="n-label">Rate</span></a>
+    <a class="nav-item active" href="/dashboard"><span class="n-icon">❤️</span><span class="n-label">Saved</span></a>
+</div>
+
+</body>
+</html>

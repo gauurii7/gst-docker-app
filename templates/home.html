@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StyleMe - Your AI Outfit Stylist</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #fff5f9; min-height: 100vh; color: #3d0020; padding-bottom: 84px; }
+
+/* TOPBAR */
+.topbar {
+    padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+    background: white; position: sticky; top: 0; z-index: 20;
+    box-shadow: 0 2px 12px rgba(233,30,140,0.08);
+}
+.brand { font-size: 22px; font-weight: 900; background: linear-gradient(135deg,#e91e8c,#f06292,#ce93d8); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.icon-circle {
+    width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 18px; cursor: pointer; text-decoration: none;
+    background: #fff0f7; border: 1.5px solid #f8bbd0; transition: transform 0.2s;
+}
+.icon-circle:hover { transform: scale(1.1); }
+.avatar-circle { background: linear-gradient(135deg,#e91e8c,#ce93d8); border: none; }
+
+/* HERO */
+.hero {
+    margin: 14px; border-radius: 28px; overflow: hidden;
+    background: linear-gradient(135deg, #fce4ff 0%, #ffe4f0 50%, #ffd6e8 100%);
+    border: 1px solid #f8bbd0; padding: 26px 22px;
+    position: relative; animation: fadeUp 0.5s ease;
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.hero-deco { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 72px; opacity: 0.18; pointer-events: none; }
+.hero-greeting { font-size: 13px; color: #e91e8c; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px; }
+.hero h1 { font-size: 24px; font-weight: 900; color: #3d0020; line-height: 1.3; margin-bottom: 8px; }
+.hero h1 span { background: linear-gradient(135deg,#e91e8c,#ce93d8); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+.hero p { font-size: 13px; color: #c2185b; margin-bottom: 18px; opacity: 0.8; }
+.hero-cta {
+    display: inline-block; padding: 11px 26px;
+    background: linear-gradient(135deg,#e91e8c,#f06292);
+    color: white; border-radius: 30px; font-size: 14px; font-weight: bold;
+    text-decoration: none; box-shadow: 0 4px 16px rgba(233,30,140,0.3);
+    transition: transform 0.2s;
+}
+.hero-cta:hover { transform: translateY(-2px); }
+
+/* MOOD PICKER */
+.mood-section { padding: 16px 16px 0; }
+.section-label { font-size: 13px; font-weight: bold; color: #c2185b; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.mood-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+.mood-row::-webkit-scrollbar { display: none; }
+.mood-chip {
+    flex-shrink: 0; padding: 8px 16px; border-radius: 20px;
+    background: white; border: 1.5px solid #f8bbd0;
+    font-size: 13px; cursor: pointer; color: #c2185b;
+    transition: all 0.2s; white-space: nowrap;
+}
+.mood-chip:hover, .mood-chip.active { background: linear-gradient(135deg,#e91e8c,#f06292); color: white; border-color: transparent; box-shadow: 0 3px 10px rgba(233,30,140,0.25); }
+
+/* FEATURE CARDS */
+.features { display: flex; gap: 12px; padding: 16px; overflow-x: auto; scrollbar-width: none; }
+.features::-webkit-scrollbar { display: none; }
+.feat-card {
+    min-width: 148px; border-radius: 22px; padding: 20px 16px;
+    display: flex; flex-direction: column; gap: 8px;
+    text-decoration: none; flex-shrink: 0;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative; overflow: hidden;
+}
+.feat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 28px rgba(233,30,140,0.18); }
+.feat-card .f-icon { font-size: 30px; }
+.feat-card .f-title { font-size: 14px; font-weight: bold; }
+.feat-card .f-desc { font-size: 11px; opacity: 0.75; line-height: 1.4; }
+.feat-card .f-arrow { font-size: 16px; opacity: 0.6; margin-top: auto; }
+.card-select { background: linear-gradient(135deg,#fce4ff,#f8bbd0); border: 1px solid #f48fb1; color: #880e4f; }
+.card-upload { background: linear-gradient(135deg,#ffe4f0,#ffd6e8); border: 1px solid #f48fb1; color: #880e4f; }
+.card-rate   { background: linear-gradient(135deg,#fff0f7,#fce4ff); border: 1px solid #ce93d8; color: #6a1b9a; }
+
+/* WEATHER WIDGET */
+.weather-widget {
+    margin: 0 16px 14px; background: linear-gradient(135deg,#e91e8c,#f06292,#ce93d8);
+    border-radius: 20px; padding: 16px 20px; color: white;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.weather-left .w-temp { font-size: 28px; font-weight: 900; }
+.weather-left .w-desc { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+.weather-right { text-align: right; }
+.weather-right .w-suggest { font-size: 12px; opacity: 0.9; line-height: 1.5; }
+.weather-right .w-icon { font-size: 36px; }
+
+/* STYLE TIPS */
+.tips-section { margin: 0 16px 14px; }
+.tips-scroll { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; }
+.tips-scroll::-webkit-scrollbar { display: none; }
+.tip-card {
+    flex-shrink: 0; min-width: 200px; background: white;
+    border-radius: 18px; padding: 16px; border: 1px solid #f8bbd0;
+    transition: transform 0.2s;
+}
+.tip-card:hover { transform: translateY(-3px); }
+.tip-card .t-icon { font-size: 24px; margin-bottom: 8px; }
+.tip-card .t-title { font-size: 13px; font-weight: bold; color: #880e4f; margin-bottom: 4px; }
+.tip-card .t-text { font-size: 12px; color: #c2185b; line-height: 1.5; opacity: 0.8; }
+
+/* TRENDING */
+.trend-row { display: flex; gap: 10px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; }
+.trend-row::-webkit-scrollbar { display: none; }
+.trend-chip {
+    flex-shrink: 0; padding: 7px 16px; border-radius: 20px;
+    background: white; border: 1.5px solid #f8bbd0;
+    font-size: 12px; color: #c2185b; white-space: nowrap;
+    cursor: pointer; transition: all 0.2s;
+}
+.trend-chip:hover { background: #fff0f7; border-color: #e91e8c; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; border-top: 1px solid #f8bbd0;
+    display: flex; justify-content: space-around; padding: 10px 0 16px;
+    z-index: 30; box-shadow: 0 -4px 16px rgba(233,30,140,0.08);
+}
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; }
+.nav-item .n-icon { font-size: 22px; }
+.nav-item .n-label { font-size: 10px; color: #f48fb1; }
+.nav-item.active .n-label { color: #e91e8c; font-weight: bold; }
+.nav-item.active .n-icon { filter: drop-shadow(0 0 4px rgba(233,30,140,0.5)); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="brand">StyleMe 💗</div>
+    <div class="topbar-right">
+        <a class="icon-circle" href="#">🔔</a>
+        <a class="icon-circle" href="#">🔍</a>
+        <a class="icon-circle avatar-circle" href="/dashboard">👤</a>
+    </div>
+</div>
+
+<div class="hero">
+    <div class="hero-deco">👗</div>
+    <div class="hero-greeting">✨ GOOD DAY, GORGEOUS!</div>
+    <h1>What's Your <span>Vibe</span> Today?</h1>
+    <p>Let AI pick the perfect outfit for your mood &amp; occasion</p>
+    <a href="/select" class="hero-cta">Start Styling 💅</a>
+</div>
+
+<!-- MOOD PICKER -->
+<div class="mood-section">
+    <div class="section-label">💭 Your Mood Today</div>
+    <div class="mood-row">
+        <span class="mood-chip active" onclick="pickMood(this,'Happy')">😊 Happy</span>
+        <span class="mood-chip" onclick="pickMood(this,'Confident')">💪 Confident</span>
+        <span class="mood-chip" onclick="pickMood(this,'Soft')">🌸 Soft</span>
+        <span class="mood-chip" onclick="pickMood(this,'Bold')">🔥 Bold</span>
+        <span class="mood-chip" onclick="pickMood(this,'Chill')">😌 Chill</span>
+        <span class="mood-chip" onclick="pickMood(this,'Glam')">✨ Glam</span>
+    </div>
+</div>
+
+<!-- MOOD DRESSING TIP -->
+<div id="mood-tip-box" style="margin:10px 16px 0; background:white; border-radius:18px; border:1.5px solid #f8bbd0; padding:14px 16px; display:flex; align-items:flex-start; gap:12px; box-shadow:0 2px 10px rgba(233,30,140,0.07); animation:fadeUp 0.3s ease;">
+    <div style="font-size:26px; flex-shrink:0;" id="mood-tip-icon">😊</div>
+    <div>
+        <div style="font-size:12px;font-weight:bold;color:#e91e8c;margin-bottom:4px;" id="mood-tip-title">Happy Vibes</div>
+        <div style="font-size:13px;color:#880e4f;line-height:1.6;" id="mood-tip-text">Go for bright, cheerful colors like yellow, coral or sky blue. A flowy sundress or a fun printed co-ord set perfectly matches your happy energy!</div>
+    </div>
+</div>
+
+<!-- WEATHER WIDGET -->
+<div class="section-label" style="padding: 16px 16px 8px;">🌤️ Dress for the Weather</div>
+<div class="weather-widget">
+    <div class="weather-left">
+        <div class="w-temp">28°C ☀️</div>
+        <div class="w-desc">Sunny &amp; Warm</div>
+    </div>
+    <div class="weather-right">
+        <div class="w-icon">👗</div>
+        <div class="w-suggest">Light fabrics &amp;<br>bright colors!</div>
+    </div>
+</div>
+
+<!-- FEATURE CARDS -->
+<div class="section-label" style="padding: 4px 16px 8px;">🎀 What do you want to do?</div>
+<div class="features">
+    <a class="feat-card card-select" href="/select">
+        <div class="f-icon">👔</div>
+        <div class="f-title">Select Outfit</div>
+        <div class="f-desc">Mix &amp; match from our collection</div>
+        <div class="f-arrow">→</div>
+    </a>
+    <a class="feat-card card-upload" href="/upload">
+        <div class="f-icon">📸</div>
+        <div class="f-title">Upload &amp; Compare</div>
+        <div class="f-desc">Get a verdict on your outfits</div>
+        <div class="f-arrow">→</div>
+    </a>
+    <a class="feat-card card-rate" href="/rate">
+        <div class="f-icon">⭐</div>
+        <div class="f-title">Rate My Look</div>
+        <div class="f-desc">AI style score &amp; tips</div>
+        <div class="f-arrow">→</div>
+    </a>
+</div>
+
+<!-- TRENDING TAGS -->
+<div class="section-label" style="padding: 4px 16px 8px;">🔥 Trending Now</div>
+<div class="trend-row">
+    <span class="trend-chip" onclick="showTrend(this,'CoralSummer')">#CoralSummer</span>
+    <span class="trend-chip" onclick="showTrend(this,'PastelVibes')">#PastelVibes</span>
+    <span class="trend-chip" onclick="showTrend(this,'OfficeSlay')">#OfficeSlay</span>
+    <span class="trend-chip" onclick="showTrend(this,'FestiveLook')">#FestiveLook</span>
+    <span class="trend-chip" onclick="showTrend(this,'MinimalistChic')">#MinimalistChic</span>
+    <span class="trend-chip" onclick="showTrend(this,'BoldPrints')">#BoldPrints</span>
+</div>
+
+<!-- TREND DETAIL CARD -->
+<div id="trend-card" style="display:none; margin: 0 16px 14px; background:white; border-radius:22px; border:1.5px solid #f8bbd0; box-shadow:0 4px 16px rgba(233,30,140,0.1); overflow:hidden; animation:fadeUp 0.3s ease;">
+    <div style="padding:16px 18px; background:linear-gradient(135deg,#fce4ff,#ffe4f0); border-bottom:1px solid #f8bbd0; display:flex; align-items:center; justify-content:space-between;">
+        <div>
+            <div id="trend-tag" style="font-size:13px;font-weight:900;color:#e91e8c;"></div>
+            <div id="trend-subtitle" style="font-size:11px;color:#c2185b;margin-top:2px;"></div>
+        </div>
+        <button onclick="closeTrend()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#f48fb1;">✕</button>
+    </div>
+    <div style="padding:16px 18px;">
+        <!-- COLORS -->
+        <div style="font-size:11px;font-weight:bold;color:#e91e8c;letter-spacing:1px;margin-bottom:10px;">🎨 KEY COLORS</div>
+        <div id="trend-colors" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+        <!-- OUTFIT IDEAS -->
+        <div style="font-size:11px;font-weight:bold;color:#e91e8c;letter-spacing:1px;margin-bottom:10px;">👗 OUTFIT IDEAS</div>
+        <div id="trend-outfits" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+        <!-- DO &amp; DONT -->
+        <div style="display:flex;gap:10px;">
+            <div style="flex:1;background:#f0fff4;border-radius:14px;padding:12px;border:1px solid #b2dfdb;">
+                <div style="font-size:11px;font-weight:bold;color:#2e7d32;margin-bottom:6px;">✅ DO</div>
+                <div id="trend-do" style="font-size:12px;color:#388e3c;line-height:1.6;"></div>
+            </div>
+            <div style="flex:1;background:#fff5f5;border-radius:14px;padding:12px;border:1px solid #ffcdd2;">
+                <div style="font-size:11px;font-weight:bold;color:#c62828;margin-bottom:6px;">❌ DON'T</div>
+                <div id="trend-dont" style="font-size:12px;color:#e53935;line-height:1.6;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STYLE TIPS -->
+<div class="section-label" style="padding: 4px 16px 8px;">💡 Style Tips</div>
+<div class="tips-section">
+    <div class="tips-scroll">
+        <div class="tip-card" id="cb-card" style="min-width:260px; cursor:pointer;" onclick="toggleCB()">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div class="t-icon">🎨</div>
+                    <div class="t-title">Color Blocking</div>
+                    <div class="t-text">Tap to find colors for your skin tone</div>
+                </div>
+                <span id="cb-arrow" style="font-size:18px;color:#f48fb1;transition:transform 0.3s;">▾</span>
+            </div>
+
+            <!-- SKIN TONE SELECTOR -->
+            <div id="cb-panel" style="display:none; margin-top:14px;" onclick="event.stopPropagation()">
+                <div style="font-size:11px;font-weight:bold;color:#e91e8c;letter-spacing:1px;margin-bottom:10px;">SELECT YOUR SKIN TONE</div>
+                <div style="display:flex;gap:10px;justify-content:center;margin-bottom:14px;">
+                    <div class="tone-btn" onclick="showPalette('fair',event)" id="tone-fair"
+                        style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+                        <div style="width:44px;height:44px;border-radius:50%;background:#fde8d8;border:3px solid transparent;transition:border 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
+                        <span style="font-size:11px;color:#880e4f;font-weight:bold;">Fair</span>
+                    </div>
+                    <div class="tone-btn" onclick="showPalette('medium',event)" id="tone-medium"
+                        style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+                        <div style="width:44px;height:44px;border-radius:50%;background:#c68642;border:3px solid transparent;transition:border 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
+                        <span style="font-size:11px;color:#880e4f;font-weight:bold;">Medium</span>
+                    </div>
+                    <div class="tone-btn" onclick="showPalette('deep',event)" id="tone-deep"
+                        style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;">
+                        <div style="width:44px;height:44px;border-radius:50%;background:#4a2912;border:3px solid transparent;transition:border 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
+                        <span style="font-size:11px;color:#880e4f;font-weight:bold;">Deep</span>
+                    </div>
+                </div>
+
+                <!-- PALETTE DISPLAY -->
+                <div id="palette-box" style="display:none;animation:fadeUp 0.3s ease;">
+                    <div style="font-size:11px;font-weight:bold;color:#e91e8c;letter-spacing:1px;margin-bottom:8px;" id="palette-title"></div>
+                    <div id="palette-colors" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
+                    <div id="palette-tip" style="font-size:12px;color:#c2185b;line-height:1.5;background:#fff0f7;border-radius:10px;padding:10px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="tip-card">
+            <div class="t-icon">👟</div>
+            <div class="t-title">Shoe Game</div>
+            <div class="t-text">White sneakers elevate any casual outfit instantly</div>
+        </div>
+        <div class="tip-card">
+            <div class="t-icon">💍</div>
+            <div class="t-title">Accessorize</div>
+            <div class="t-text">A statement bag or earrings can transform a simple outfit</div>
+        </div>
+        <div class="tip-card">
+            <div class="t-icon">🌸</div>
+            <div class="t-title">Pastels Win</div>
+            <div class="t-text">Soft pastels are perfect for daytime events and brunches</div>
+        </div>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a class="nav-item active" href="/home"><span class="n-icon">🏠</span><span class="n-label">Home</span></a>
+    <a class="nav-item" href="/select"><span class="n-icon">👔</span><span class="n-label">Select</span></a>
+    <a class="nav-item" href="/upload"><span class="n-icon">📸</span><span class="n-label">Upload</span></a>
+    <a class="nav-item" href="/rate"><span class="n-icon">⭐</span><span class="n-label">Rate</span></a>
+    <a class="nav-item" href="/dashboard"><span class="n-icon">❤️</span><span class="n-label">Saved</span></a>
+</div>
+
+<script>
+// ── MOOD ──
+const moodData = {
+    Happy:     { icon:'😊', title:'Happy Vibes 😊', text:'Go for bright cheerful colors like yellow, coral or sky blue. A flowy sundress or a fun printed co-ord set perfectly matches your happy energy!' },
+    Confident: { icon:'💪', title:'Confident & Powerful 💪', text:'Own the room in a sharp blazer, tailored trousers or a bold monochrome outfit. Power colors like red, navy and black are your best friends today.' },
+    Soft:      { icon:'🌸', title:'Soft & Feminine 🌸', text:'Lean into pastels, flowy fabrics and delicate details. A blush pink midi dress, lace top or a soft floral print will match your gentle energy perfectly.' },
+    Bold:      { icon:'🔥', title:'Bold & Fierce 🔥', text:'Make a statement with vibrant colors, bold prints or an unexpected color combo. Animal prints, neons or a striking red outfit will turn every head.' },
+    Chill:     { icon:'😌', title:'Chill & Relaxed 😌', text:'Keep it easy with neutral tones, oversized fits and comfy fabrics. A linen co-ord, oversized hoodie or relaxed jeans with a simple tee is perfect for your vibe.' },
+    Glam:      { icon:'✨', title:'Glam Queen ✨', text:'Shine bright with metallics, sequins or a sleek bodycon silhouette. Rich jewel tones like emerald, gold and deep purple will make you look absolutely stunning.' }
+};
+
+function pickMood(el, mood) {
+    document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    const d = moodData[mood];
+    document.getElementById('mood-tip-icon').textContent  = d.icon;
+    document.getElementById('mood-tip-title').textContent = d.title;
+    document.getElementById('mood-tip-text').textContent  = d.text;
+}
+
+// ── TRENDS ──
+const trends = {
+    CoralSummer: {
+        subtitle: 'Hot trend this season 🌞',
+        colors: [{hex:'#FF6B6B',name:'Coral'},{hex:'#FF8E53',name:'Tangerine'},{hex:'#FFC3A0',name:'Peach'},{hex:'#FFEDD5',name:'Cream'},{hex:'#C0392B',name:'Deep Red'}],
+        outfits: ['👗 Coral wrap dress with nude heels','👖 Peach linen trousers + white crop top','🧣 Tangerine blazer over white tee & jeans'],
+        do: 'Pair coral with white, cream or nude. Layer different coral shades for a tonal look.',
+        dont: 'Avoid mixing coral with red or hot pink — it clashes badly.'
+    },
+    PastelVibes: {
+        subtitle: 'Soft & dreamy 🌸',
+        colors: [{hex:'#FFD1DC',name:'Baby Pink'},{hex:'#B5EAD7',name:'Mint'},{hex:'#C7CEEA',name:'Periwinkle'},{hex:'#FFDAC1',name:'Peach'},{hex:'#E2F0CB',name:'Soft Green'}],
+        outfits: ['🌸 Lavender co-ord set with white sneakers','👚 Mint green midi skirt + baby pink blouse','🧥 Pastel blue oversized hoodie & white shorts'],
+        do: 'Mix two different pastels together. Keep accessories minimal and light.',
+        dont: "Don't add dark or neon accessories — they kill the soft vibe."
+    },
+    OfficeSlay: {
+        subtitle: 'Boss mode activated 💼',
+        colors: [{hex:'#2C3E50',name:'Navy'},{hex:'#7F8C8D',name:'Slate Grey'},{hex:'#F5F5F0',name:'Off White'},{hex:'#8B4513',name:'Camel'},{hex:'#1A1A2E',name:'Charcoal'}],
+        outfits: ['👔 Navy blazer + tailored trousers + white shirt','👗 Camel midi dress with block heels','🧥 Grey pantsuit with a silk blouse'],
+        do: 'Stick to structured silhouettes. A well-fitted blazer instantly elevates any look.',
+        dont: 'Avoid loud prints, ripped clothing or overly casual sneakers at the office.'
+    },
+    FestiveLook: {
+        subtitle: 'Celebrate in style 🎉',
+        colors: [{hex:'#C0392B',name:'Deep Red'},{hex:'#F39C12',name:'Gold'},{hex:'#8E44AD',name:'Royal Purple'},{hex:'#1ABC9C',name:'Emerald'},{hex:'#E74C3C',name:'Festive Red'}],
+        outfits: ['🪔 Deep red anarkali with gold jewellery','👗 Emerald green lehenga with contrast dupatta','✨ Royal purple saree with golden border'],
+        do: 'Go bold with jewel tones. Layer gold or silver accessories for a festive glow.',
+        dont: 'Avoid plain whites or pastels — they look too casual for festive occasions.'
+    },
+    MinimalistChic: {
+        subtitle: 'Less is more ✨',
+        colors: [{hex:'#FFFFFF',name:'White'},{hex:'#F5F5F5',name:'Off White'},{hex:'#D3D3D3',name:'Light Grey'},{hex:'#A9A9A9',name:'Grey'},{hex:'#1C1C1C',name:'Black'}],
+        outfits: ['⚪ White wide-leg trousers + fitted black turtleneck','🧥 Oversized grey blazer + black straight jeans','👗 Monochrome beige co-ord with minimal jewellery'],
+        do: 'Focus on fit and fabric quality. One statement piece is enough.',
+        dont: "Don't over-accessorize — keep it to one or two clean pieces max."
+    },
+    BoldPrints: {
+        subtitle: 'Make heads turn 🔥',
+        colors: [{hex:'#FF1744',name:'Bold Red'},{hex:'#FF6D00',name:'Vivid Orange'},{hex:'#FFD600',name:'Electric Yellow'},{hex:'#00BFA5',name:'Teal'},{hex:'#AA00FF',name:'Electric Purple'}],
+        outfits: ['💆 Animal print co-ord with nude heels','🌺 Floral maxi dress with a denim jacket','🔶 Geometric print blazer + solid color trousers'],
+        do: 'Let the print be the star — pair with solid neutrals to balance the look.',
+        dont: "Never mix two different bold prints in one outfit — pick one and own it."
+    }
+};
+
+function showTrend(el, key) {
+    document.querySelectorAll('.trend-chip').forEach(c => { c.style.background=''; c.style.color=''; c.style.borderColor=''; c.style.boxShadow=''; });
+    el.style.background = 'linear-gradient(135deg,#e91e8c,#f06292)';
+    el.style.color = 'white'; el.style.borderColor = 'transparent';
+    el.style.boxShadow = '0 3px 10px rgba(233,30,140,0.3)';
+    const d = trends[key];
+    document.getElementById('trend-tag').textContent = '#' + key;
+    document.getElementById('trend-subtitle').textContent = d.subtitle;
+    document.getElementById('trend-colors').innerHTML = d.colors.map(c =>
+        `<div style="text-align:center;"><div style="width:36px;height:36px;border-radius:12px;background:${c.hex};box-shadow:0 2px 8px rgba(0,0,0,0.15);margin-bottom:4px;border:1px solid rgba(0,0,0,0.06);"></div><div style="font-size:9px;color:#880e4f;font-weight:bold;width:36px;line-height:1.2;">${c.name}</div></div>`
+    ).join('');
+    document.getElementById('trend-outfits').innerHTML = d.outfits.map(o =>
+        `<div style="background:#fff0f7;border-radius:12px;padding:10px 14px;font-size:13px;color:#880e4f;border:1px solid #f8bbd0;">${o}</div>`
+    ).join('');
+    document.getElementById('trend-do').textContent = d.do;
+    document.getElementById('trend-dont').textContent = d.dont;
+    const card = document.getElementById('trend-card');
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function closeTrend() {
+    document.getElementById('trend-card').style.display = 'none';
+    document.querySelectorAll('.trend-chip').forEach(c => { c.style.background=''; c.style.color=''; c.style.borderColor=''; c.style.boxShadow=''; });
+}
+
+// ── COLOR PALETTE ──
+const palettes = {
+    fair:   { title:'🌸 Best Colors for Fair Skin',   colors:[{hex:'#e8a0bf',name:'Blush Pink'},{hex:'#b5d5c5',name:'Sage Green'},{hex:'#a8c5da',name:'Sky Blue'},{hex:'#c9b1d9',name:'Lavender'},{hex:'#f4c2c2',name:'Petal Pink'},{hex:'#f9e4b7',name:'Soft Yellow'},{hex:'#d4a5a5',name:'Dusty Rose'},{hex:'#b8d4e8',name:'Powder Blue'}], tip:'💡 Fair skin glows in soft pastels, cool blues and blush tones. Avoid very pale yellows — go for warm pinks and lilacs instead!' },
+    medium: { title:'✨ Best Colors for Medium Skin', colors:[{hex:'#e07b54',name:'Terracotta'},{hex:'#f4a261',name:'Warm Orange'},{hex:'#2a9d8f',name:'Teal'},{hex:'#e9c46a',name:'Golden Yellow'},{hex:'#c1440e',name:'Rust Red'},{hex:'#6a994e',name:'Olive Green'},{hex:'#e76f51',name:'Coral'},{hex:'#9b2335',name:'Deep Crimson'}], tip:'💡 Medium skin tones shine in warm earthy tones, corals and rich jewel colors. Terracotta and golden yellow are your best friends!' },
+    deep:   { title:'💫 Best Colors for Deep Skin',   colors:[{hex:'#ff6b6b',name:'Bright Red'},{hex:'#ffd93d',name:'Vivid Yellow'},{hex:'#6bcb77',name:'Bright Green'},{hex:'#4d96ff',name:'Royal Blue'},{hex:'#ff922b',name:'Bold Orange'},{hex:'#cc5de8',name:'Vibrant Purple'},{hex:'#ffffff',name:'Crisp White'},{hex:'#f06595',name:'Hot Pink'}], tip:'💡 Deep skin tones look stunning in bold vibrant colors and bright whites. Rich jewel tones and neons create a striking contrast!' }
+};
+
+function toggleCB() {
+    const panel = document.getElementById('cb-panel');
+    const arrow  = document.getElementById('cb-arrow');
+    const open   = panel.style.display === 'block';
+    panel.style.display    = open ? 'none' : 'block';
+    arrow.style.transform  = open ? '' : 'rotate(180deg)';
+}
+
+function showPalette(tone, e) {
+    e.stopPropagation();
+    ['fair','medium','deep'].forEach(t => {
+        const circle = document.querySelector('#tone-' + t + ' div');
+        circle.style.border     = t === tone ? '3px solid #e91e8c' : '3px solid transparent';
+        circle.style.boxShadow  = t === tone ? '0 0 0 3px rgba(233,30,140,0.2)' : '0 2px 8px rgba(0,0,0,0.1)';
+    });
+    const data = palettes[tone];
+    document.getElementById('palette-title').textContent = data.title;
+    document.getElementById('palette-tip').textContent   = data.tip;
+    document.getElementById('palette-colors').innerHTML  = data.colors.map(c =>
+        `<div style="text-align:center;"><div style="width:38px;height:38px;border-radius:12px;background:${c.hex};box-shadow:0 2px 8px rgba(0,0,0,0.15);margin-bottom:4px;"></div><div style="font-size:9px;color:#880e4f;font-weight:bold;width:38px;line-height:1.2;">${c.name}</div></div>`
+    ).join('');
+    document.getElementById('palette-box').style.display = 'block';
+}
+</script>
+</body>
+</html>

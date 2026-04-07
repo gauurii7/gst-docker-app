@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #fff5f9; min-height: 100vh; color: #3d0020; padding-bottom: 100px; }
+.topbar { padding: 14px 20px; display: flex; align-items: center; background: white; position: sticky; top: 0; z-index: 20; box-shadow: 0 2px 12px rgba(233,30,140,0.08); }
+.topbar h2 { flex: 1; text-align: center; font-size: 18px; font-weight: bold; color: #880e4f; }
+.icon-btn { background: #fff0f7; border: 1.5px solid #f8bbd0; border-radius: 50%; width: 36px; height: 36px; font-size: 16px; cursor: pointer; color: #e91e8c; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: transform 0.2s; }
+.icon-btn:hover { transform: scale(1.1); }
+.content { padding: 20px 16px; }
+.step-label { font-size: 11px; color: #e91e8c; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+.upload-row { display: flex; gap: 12px; margin-bottom: 20px; }
+.upload-box {
+    flex: 1; border-radius: 22px; background: white;
+    border: 2px dashed #f8bbd0; padding: 16px 10px;
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; transition: all 0.2s; min-height: 200px; justify-content: center;
+    position: relative; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(233,30,140,0.06);
+}
+.upload-box:hover { border-color: #e91e8c; background: #fff0f7; }
+.upload-box.has-img { border-style: solid; border-color: #e91e8c; }
+.upload-box .u-icon { font-size: 32px; margin-bottom: 8px; }
+.upload-box .u-label { font-size: 12px; color: #f48fb1; text-align: center; }
+.upload-box .u-title { font-size: 14px; font-weight: bold; color: #880e4f; margin-bottom: 6px; }
+.upload-box input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.preview-img { width: 100%; height: 160px; object-fit: cover; border-radius: 14px; display: none; }
+.outfit-num { position: absolute; top: 10px; left: 10px; background: linear-gradient(135deg,#e91e8c,#f06292); color: white; border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: bold; }
+.section-card { background: white; border-radius: 20px; padding: 18px; margin-bottom: 16px; border: 1.5px solid #f8bbd0; box-shadow: 0 2px 12px rgba(233,30,140,0.06); }
+.section-card h4 { font-size: 14px; font-weight: bold; margin-bottom: 14px; color: #880e4f; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { padding: 9px 18px; border-radius: 20px; background: #fff0f7; cursor: pointer; font-size: 13px; color: #c2185b; border: 1.5px solid #f8bbd0; transition: all 0.2s; }
+.pill:hover { border-color: #e91e8c; background: #fce4ff; }
+.pill.active { background: linear-gradient(135deg,#e91e8c,#f06292); color: white; border-color: transparent; box-shadow: 0 3px 12px rgba(233,30,140,0.3); }
+.submit-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 14px 16px; border-top: 1px solid #f8bbd0; box-shadow: 0 -4px 16px rgba(233,30,140,0.08); z-index: 20; }
+.submit-btn { width: 100%; padding: 15px; background: linear-gradient(135deg,#e91e8c,#f06292,#ce93d8); color: white; border: none; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 16px rgba(233,30,140,0.35); transition: transform 0.2s; }
+.submit-btn:hover { transform: translateY(-2px); }
+</style>
+</head>
+<body>
+<div class="topbar">
+    <a class="icon-btn" onclick="history.back()">←</a>
+    <h2>💗 Upload & Compare</h2>
+    <a href="/home" class="icon-btn">🏠</a>
+</div>
+<div class="content">
+<form action="/compare" method="POST" enctype="multipart/form-data">
+<div class="step-label">Step 1 — Upload your outfits</div>
+<div class="upload-row">
+    <div class="upload-box" id="box1">
+        <div class="outfit-num">1</div>
+        <div class="u-icon">📷</div>
+        <div class="u-title">Outfit 1</div>
+        <div class="u-label">Tap to upload</div>
+        <img id="prev1" class="preview-img">
+        <input type="file" name="outfit1" accept="image/*" required onchange="previewImg(this,'prev1','box1')">
+    </div>
+    <div class="upload-box" id="box2">
+        <div class="outfit-num">2</div>
+        <div class="u-icon">📷</div>
+        <div class="u-title">Outfit 2</div>
+        <div class="u-label">Tap to upload</div>
+        <img id="prev2" class="preview-img">
+        <input type="file" name="outfit2" accept="image/*" required onchange="previewImg(this,'prev2','box2')">
+    </div>
+</div>
+<div class="step-label">Step 2 — Pick your occasion</div>
+<div class="section-card">
+    <h4>🎯 Where are you heading?</h4>
+    <input type="hidden" name="occasion" id="occasion_val">
+    <div class="pills">
+        <span class="pill" onclick="pickOcc(this,'Office')">🏢 Office</span>
+        <span class="pill" onclick="pickOcc(this,'Casual')">👕 Casual</span>
+        <span class="pill" onclick="pickOcc(this,'Function')">🎉 Function</span>
+        <span class="pill" onclick="pickOcc(this,'Traditional')">🪔 Traditional</span>
+        <span class="pill" onclick="pickOcc(this,'Party')">🥂 Party</span>
+    </div>
+</div>
+<div class="submit-bar">
+    <button type="submit" class="submit-btn">💗 Get the Verdict!</button>
+</div>
+</form>
+</div>
+<script>
+function previewImg(input, previewId, boxId) {
+    if (input.files && input.files[0]) {
+        const img = document.getElementById(previewId);
+        const box = document.getElementById(boxId);
+        img.src = URL.createObjectURL(input.files[0]);
+        img.style.display = 'block';
+        box.querySelector('.u-icon').style.display = 'none';
+        box.querySelector('.u-title').style.display = 'none';
+        box.querySelector('.u-label').style.display = 'none';
+        box.classList.add('has-img');
+    }
+}
+function pickOcc(el, value) {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('occasion_val').value = value;
+}
+</script>
+</body>
+</html>
